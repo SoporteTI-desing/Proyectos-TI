@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tablero de Proyectos - Sanaré / Nomad / TI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    :root {
+      --bg: #05010a;
+      --bg-card: #090712;
+      --accent: #ffb300;
+      --accent-soft: rgba(255, 179, 0, 0.15);
+      --accent-2: #a855f7;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border-soft: rgba(148, 163, 184, 0.25);
+      --danger: #fb7185;
+      --success: #a3e635;
+      --radius-xl: 18px;
+      --shadow-soft: 0 18px 40px rgba(18, 8, 24, 0.65);
+      --transition-fast: 0.25s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at top, #05010a 0, #05010a 55%, #000 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1200px;
+      padding: 20px 22px 26px;
+      background: radial-gradient(circle at top left, #05010a 0, #05010a 65%);
+      border-radius: 30px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: 0 30px 80px rgba(18, 8, 24, 0.9);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(168, 85, 247, 0.24) 0, transparent 50%),
+        radial-gradient(circle at 90% 10%, rgba(251, 191, 36, 0.22) 0, transparent 50%);
+      opacity: 0.7;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title-block h1 {
+      font-size: 1.4rem;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pill {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(18, 8, 24, 0.9);
+      color: var(--text-muted);
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .subtitle strong {
+      color: var(--accent-2);
+    }
+
+    .logo-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .logo-chip {
+      font-size: 0.72rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(18, 8, 24, 0.9);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+    }
+
+    .logo-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent-2);
+    }
+
+    .logo-dot.nomad {
+      background: var(--accent);
+    }
+
+    .logo-dot.ti {
+      background: var(--success);
+    }
+
+    /* Filtros */
+    .filters {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-soft);
+      background: rgba(18, 8, 24, 0.92);
+      backdrop-filter: blur(18px);
+    }
+
+    .filters-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .filters-left span strong {
+      color: var(--accent);
+    }
+
+    .filters-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .range-select {
+      position: relative;
+    }
+
+    .range-select select {
+      appearance: none;
+      border-radius: 999px;
+      padding: 7px 30px 7px 12px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(18, 8, 24, 0.9);
+      color: var(--text-main);
+      font-size: 0.8rem;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .range-select::after {
+      content: "▾";
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-52%);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .tiny-tag {
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(168, 85, 247, 0.22);
+      border: 1px solid rgba(236, 72, 153, 0.45);
+      color: #f9a8d4;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tiny-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent-2);
+    }
+
+    /* Contenedor de proyectos */
+    .projects {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .project-card {
+      background: linear-gradient(
+          135deg,
+          rgba(18, 8, 24, 0.9),
+          rgba(18, 8, 24, 0.98)
+        );
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-soft);
+      padding: 14px 14px 16px;
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: transform var(--transition-fast),
+        box-shadow var(--transition-fast), border-color var(--transition-fast);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .project-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle at top right,
+        rgba(168, 85, 247, 0.2),
+        transparent 55%
+      );
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition-fast);
+    }
+
+    .project-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 26px 60px rgba(18, 8, 24, 0.9);
+      border-color: rgba(148, 163, 184, 0.6);
+    }
+
+    .project-card:hover::before {
+      opacity: 0.8;
+    }
+
+    .project-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .project-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .project-title span {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+    }
+
+    .project-tag {
+      font-size: 0.7rem;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(190, 24, 93, 0.22);
+      border: 1px solid rgba(249, 115, 22, 0.6);
+      color: #f9a8d4;
+      align-self: flex-start;
+    }
+
+    .project-tag.facturador {
+      background: rgba(168, 85, 247, 0.22);
+      border-color: rgba(236, 72, 153, 0.8);
+      color: #f9a8d4;
+    }
+
+    .project-tag.nomad {
+      background: rgba(251, 191, 36, 0.18);
+      border-color: rgba(252, 211, 77, 0.75);
+      color: #fde68a;
+    }
+
+    .project-tag.sanare {
+      background: rgba(236, 72, 153, 0.18);
+      border-color: rgba(244, 114, 182, 0.75);
+      color: #f9a8d4;
+    }
+
+    .project-tag.ti {
+      background: rgba(132, 204, 22, 0.18);
+      border-color: rgba(249, 115, 22, 0.8);
+      color: #a7f3d0;
+    }
+
+    .project-tag.iot {
+      background: rgba(132, 204, 22, 0.18);
+      border-color: rgba(190, 242, 100, 0.85);
+      color: #bbf7d0;
+    }
+
+    .project-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8rem;
+    }
+
+    .project-stat-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .progress-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .progress-value {
+      font-size: 1.05rem;
+      font-weight: 600;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .progress-value span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .duration-summary {
+      margin-top: 4px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .duration-summary strong {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .tasks-summary {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .tasks-summary strong {
+      color: var(--accent-2);
+      font-weight: 500;
+    }
+
+    /* Barra de progreso */
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(168, 85, 247, 0.35);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #ec4899, #facc15, #fb7185);
+      width: 0;
+      transition: width 0.4s ease-in-out;
+    }
+
+    /* Pista del corredor */
+    .runner-track {
+      margin-top: 8px;
+      position: relative;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: radial-gradient(
+        ellipse at center,
+        rgba(18, 8, 24, 0.95),
+        rgba(18, 8, 24, 0.9)
+      );
+      border: 1px dashed rgba(148, 163, 184, 0.6);
+      overflow: hidden;
+    }
+
+    .runner-track-line {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      top: 50%;
+      height: 2px;
+      background: repeating-linear-gradient(
+        to right,
+        rgba(148, 163, 184, 0.9) 0,
+        rgba(148, 163, 184, 0.9) 14px,
+        transparent 14px,
+        transparent 22px
+      );
+      transform: translateY(-50%);
+      opacity: 0.35;
+    }
+
+    .runner-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .runner-label span:last-child {
+      color: var(--accent-soft);
+    }
+
+    .runner {
+      position: relative;
+      height: 40px;
+    }
+
+    .runner-img {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px rgba(250, 204, 21, 0.9));
+      transition: left 0.4s ease-in-out;
+    }
+
+    .runner-shadow {
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 36px;
+      height: 8px;
+      border-radius: 50%;
+      background: radial-gradient(
+        ellipse at center,
+        rgba(18, 8, 24, 0.9),
+        transparent
+      );
+      opacity: 0.7;
+    }
+
+    /* Chips de estado */
+    .status-chip {
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--success);
+    }
+
+    .status-dot.risk {
+      background: var(--danger);
+    }
+
+    .status-dot.mid {
+      background: var(--accent);
+    }
+
+    /* PREVIEW DE CELULAR (por ejemplo para Sanaré App) */
+    .phone-preview {
+      margin-top: 10px;
+      display: none; /* se muestra por JS cuando el proyecto lo pida */
+      justify-content: flex-end;
+    }
+
+    .phone-frame {
+      width: 90px;
+      height: 160px;
+      border-radius: 22px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: radial-gradient(circle at top, #120818, #05010a);
+      padding: 8px 6px;
+      position: relative;
+      box-shadow: 0 10px 25px rgba(18, 8, 24, 0.9);
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(18, 8, 24, 0.95);
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      background: linear-gradient(145deg, #f97316, #fb7185, #a855f7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8px;
+      gap: 6px;
+      color: #f9fafb;
+      font-size: 0.7rem;
+    }
+
+    .phone-app-name {
+      font-weight: 600;
+      font-size: 0.78rem;
+    }
+
+    .phone-app-sub {
+      font-size: 0.65rem;
+      opacity: 0.9;
+    }
+
+    /* Botón de tareas */
+    .tasks-button {
+      margin-top: 10px;
+      align-self: flex-start;
+      font-size: 0.75rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(18, 8, 24, 0.9);
+      color: var(--text-main);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background var(--transition-fast), border-color var(--transition-fast),
+        transform var(--transition-fast);
+    }
+
+    .tasks-button span {
+      font-size: 0.9em;
+    }
+
+    .tasks-button:hover {
+      background: rgba(168, 85, 247, 0.22);
+      border-color: rgba(236, 72, 153, 0.9);
+      transform: translateY(-1px);
+    }
+
+    /* MODAL DE TAREAS */
+    .tasks-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(18, 8, 24, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .tasks-modal-backdrop.active {
+      display: flex;
+    }
+
+    .tasks-modal {
+      width: 90%;
+      max-width: 680px;
+      background: #05010a;
+      border-radius: 20px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      box-shadow: 0 30px 80px rgba(18, 8, 24, 0.95);
+      padding: 18px 20px 16px;
+    }
+
+    .tasks-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .tasks-modal-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .tasks-modal-title span {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+    }
+
+    .tasks-modal-title h2 {
+      font-size: 1rem;
+    }
+
+    .tasks-modal-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .tasks-modal-close {
+      border: none;
+      background: rgba(18, 8, 24, 0.9);
+      color: var(--text-muted);
+      border-radius: 999px;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    .tasks-modal-close:hover {
+      background: rgba(168, 85, 247, 0.7);
+      color: white;
+    }
+
+    .tasks-list {
+      max-height: 320px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    .tasks-list ol {
+      padding-left: 1.3rem;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .task-item {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .task-item input[type="checkbox"] {
+      margin-top: 2px;
+      cursor: pointer;
+    }
+
+    .task-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .task-title {
+      font-weight: 500;
+    }
+
+    .task-meta {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .task-tag {
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      font-size: 0.68rem;
+    }
+
+    .task-tag.backend {
+      border-color: rgba(248, 250, 252, 0.7);
+    }
+
+    .task-tag.frontend {
+      border-color: rgba(168, 85, 247, 0.8);
+    }
+
+    .task-tag.mobile {
+      border-color: rgba(244, 114, 182, 0.8);
+    }
+
+    .task-tag.iot {
+      border-color: rgba(74, 222, 128, 0.8);
+    }
+
+    .task-tag.devops {
+      border-color: rgba(196, 181, 253, 0.8);
+    }
+
+    .task-tag.research {
+      border-color: rgba(251, 191, 36, 0.8);
+    }
+
+    .tasks-modal-footer {
+      margin-top: 10px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .tasks-modal-footer strong {
+      color: var(--accent-2);
+    }
+
+    @media (max-width: 768px) {
+      .app {
+        padding: 16px 14px 22px;
+        border-radius: 22px;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .filters {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .projects {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title-block">
+        <div class="pill">Tablero Operativo</div>
+        <h1>
+          Índice de Avance &nbsp;🚀
+        </h1>
+        <p class="subtitle">
+          Vista rápida de cómo vas con
+          <strong>Facturador, Nomad, Sanaré</strong> y proyectos de TI.
+        </p>
+      </div>
+
+      <div class="logo-group">
+        <div class="logo-chip">
+          <div class="logo-dot"></div>
+          Sanaré Salud
+        </div>
+        <div class="logo-chip">
+          <div class="logo-dot nomad"></div>
+          Nomad Genetics
+        </div>
+        <div class="logo-chip">
+          <div class="logo-dot ti"></div>
+          TI / Infra
+        </div>
+      </div>
+    </header>
+
+    <section class="filters">
+      <div class="filters-left">
+        <span>Rango actual: <strong id="range-label">Últimos 15 días</strong></span>
+        <span>Objetivo: tener todos los proyectos arriba de <strong>70%</strong> de avance.</span>
+      </div>
+      <div class="filters-right">
+        <span class="filter-label">Ver avance de:</span>
+        <div class="range-select">
+          <select id="view-range">
+            <option value="15">Últimos 15 días</option>
+            <option value="mes">Este mes</option>
+          </select>
+        </div>
+        <span class="tiny-tag">
+          <span class="tiny-dot"></span>
+          El personaje corre según el % real
+        </span>
+      </div>
+    </section>
+
+    <main class="projects" id="projects-container">
+      <!-- JS llena esto -->
+    </main>
+  </div>
+
+  <!-- Plantilla de tarjeta -->
+  <template id="project-card-template">
+    <article class="project-card">
+      <div class="project-header">
+        <div class="project-title">
+          <span>Proyecto</span>
+          <strong class="project-name">Nombre</strong>
+        </div>
+        <div class="project-tag">Tipo</div>
+      </div>
+
+      <div class="project-stats">
+        <div class="project-stat-main">
+          <span class="progress-label">Avance del rango</span>
+          <div class="progress-value">
+            <span class="progress-percent">0%</span>
+            <span>completado</span>
+          </div>
+          <div class="duration-summary">
+            <span>Tiempo estimado total:</span><br />
+            <span>
+              <strong class="duration-days">0</strong> días
+              (~<span class="duration-months">0</span> meses)
+            </span>
+          </div>
+        </div>
+        <div class="tasks-summary">
+          <span><strong class="tasks-done">0</strong> de <strong class="tasks-total">0</strong> tareas clave</span><br />
+          <span class="status-chip">
+            <span class="status-dot"></span>
+            <span class="status-text">En curso</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="progress-bar" aria-hidden="true">
+        <div class="progress-bar-fill"></div>
+      </div>
+
+      <div class="runner-track">
+        <div class="runner-label">
+          <span>Gráfico de avance (tu personaje)</span>
+          <span class="runner-percent">0%</span>
+        </div>
+        <div class="runner-track-line"></div>
+        <div class="runner">
+          <!-- Aquí usas tu GIF de Pikachu, sólo asegúrate de llamarlo así en la carpeta -->
+          <img
+            src="pikachu.gif"
+            alt="Personaje corriendo según el avance"
+            class="runner-img"
+          />
+          <div class="runner-shadow"></div>
+        </div>
+      </div>
+
+      <!-- Preview de app móvil (para Sanaré / Nomad si lo activas) -->
+      <div class="phone-preview">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="phone-app-name">App móvil</div>
+            <div class="phone-app-sub">Vista previa del proyecto</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="tasks-button" type="button">
+        <span>Ver tareas detalladas</span> ▸
+      </button>
+    </article>
+  </template>
+
+  <!-- MODAL DE TAREAS -->
+  <div class="tasks-modal-backdrop" id="tasks-modal">
+    <div class="tasks-modal">
+      <div class="tasks-modal-header">
+        <div class="tasks-modal-title">
+          <span>Checklist técnico</span>
+          <h2 id="tasks-modal-project-name">Proyecto</h2>
+        </div>
+        <button class="tasks-modal-close" id="tasks-modal-close" type="button">✕</button>
+      </div>
+      <p class="tasks-modal-subtitle" id="tasks-modal-subtitle">
+        Lista de tareas muy puntuales para desarrollo (backend, frontend, móvil, IoT, DevOps).
+      </p>
+      <div class="tasks-list">
+        <ol id="tasks-list-ol">
+          <!-- JS inyecta las tareas -->
+        </ol>
+      </div>
+      <div class="tasks-modal-footer">
+        <span id="tasks-modal-count"></span>
+        <span>Las tareas marcadas sólo se guardan en esta sesión (no persiste en servidor).</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================
+    // CONFIGURACIÓN DE PROYECTOS
+    // ============================
+    //
+    // progress15 / progressMonth: cómo percibes el avance global
+    // tasks: tareas muy puntuales para revisar con desarrolladores
+    const projects = [
+      {
+        id: "facturador",
+        name: "Facturador Innvida",
+        type: "Facturador",
+        tagClass: "facturador",
+        progress15: 40,
+        progressMonth: 40,
+        estimatedDays: 30,
+        showPhone: false,
+        tasks: [
+          {
+            title: "Diseñar modelo de datos CFDI 4.0 (clientes, productos, impuestos)",
+            tag: "backend",
+            area: "Arquitectura y base de datos",
+          },
+          {
+            title: "Implementar servicio de cálculo de impuestos (IVA, retenciones, descuentos)",
+            tag: "backend",
+            area: "Lógica de negocio",
+          },
+          {
+            title: "Validar RFC, uso de CFDI, método y forma de pago contra catálogos SAT",
+            tag: "backend",
+            area: "Validaciones fiscales",
+          },
+          {
+            title: "Crear módulo de previsualización de PDF antes de timbrar",
+            tag: "frontend",
+            area: "UI timbrado",
+          },
+          {
+            title: "Integrar PAC de timbrado en ambiente sandbox",
+            tag: "devops",
+            area: "Integraciones externas",
+          },
+          {
+            title: "Configurar carga de logo y datos fiscales por unidad de negocio",
+            tag: "frontend",
+            area: "Configuración multi-sucursal",
+          },
+          {
+            title: "Generar descarga masiva de XML/PDF por rango de fechas",
+            tag: "backend",
+            area: "Reportes y consultas",
+          },
+          {
+            title: "Implementar bitácora de timbrado y manejo de errores",
+            tag: "devops",
+            area: "Observabilidad",
+          },
+        ],
+      },
+      {
+        id: "nomad_app",
+        name: "App móvil Nomad (pacientes / KAM)",
+        type: "App móvil",
+        tagClass: "nomad",
+        progress15: 55,
+        progressMonth: 55,
+        estimatedDays: 90,
+        showPhone: true,
+        tasks: [
+          {
+            title: "Definir flujo principal: onboarding, registro de estudio, seguimiento",
+            tag: "mobile",
+            area: "UX / producto",
+          },
+          {
+            title: "Implementar login con Firebase Auth (correo y contraseña)",
+            tag: "mobile",
+            area: "Seguridad y acceso",
+          },
+          {
+            title: "Conectar app móvil con colección actual de Firestore (formulario Nomad)",
+            tag: "backend",
+            area: "Sincronización de datos",
+          },
+          {
+            title: "Habilitar envío offline con reintento cuando regrese la conexión",
+            tag: "mobile",
+            area: "Experiencia en campo",
+          },
+          {
+            title: "Crear pantalla de detalle de paciente / estudio con línea de tiempo",
+            tag: "mobile",
+            area: "UI clínica",
+          },
+          {
+            title: "Integrar lector de código QR para vincular órdenes de estudio",
+            tag: "mobile",
+            area: "Funcionalidad avanzada",
+          },
+          {
+            title: "Configurar notificaciones push para cambios de estatus",
+            tag: "devops",
+            area: "Firebase Cloud Messaging",
+          },
+          {
+            title: "Pruebas en dispositivos Android/iOS y corrección de bugs visuales",
+            tag: "mobile",
+            area: "QA",
+          },
+        ],
+      },
+      {
+        id: "sanare_app",
+        name: "App móvil Sanaré (KAM / médicos)",
+        type: "App móvil",
+        tagClass: "sanare",
+        progress15: 35,
+        progressMonth: 35,
+        estimatedDays: 75,
+        showPhone: true,
+        tasks: [
+          {
+            title: "Diseñar pantallas: home KAM, listado de médicos, registro rápido",
+            tag: "mobile",
+            area: "Diseño de interfaz",
+          },
+          {
+            title: "Integrar login seguro para KAM (Firebase Auth + roles)",
+            tag: "backend",
+            area: "Seguridad",
+          },
+          {
+            title: "Traer base de médicos (Firebase / Google Sheets) con filtros por aseguradora",
+            tag: "backend",
+            area: "Integración de datos",
+          },
+          {
+            title: "Conectar app con módulo de cotizaciones Sanaré para registrar solicitudes",
+            tag: "backend",
+            area: "Integraciones internas",
+          },
+          {
+            title: "Agregar sección de seguimiento por médico (última prueba, aseguradora, KAM)",
+            tag: "mobile",
+            area: "Gestión comercial",
+          },
+          {
+            title: "Implementar indicadores rápidos en móvil (cotizaciones por KAM / mes)",
+            tag: "frontend",
+            area: "Analytics ligero",
+          },
+          {
+            title: "Notificaciones para recordatorio de seguimientos pendientes >15 días",
+            tag: "devops",
+            area: "Automatización",
+          },
+          {
+            title: "Pruebas en campo con KAM (3–5 usuarios piloto) y levantamiento de feedback",
+            tag: "research",
+            area: "Validación funcional",
+          },
+        ],
+      },
+      {
+        id: "web_sites",
+        name: "Sitios web Sanaré / Nomad",
+        type: "Web / Landing",
+        tagClass: "ti",
+        progress15: 45,
+        progressMonth: 45,
+        estimatedDays: 45,
+        showPhone: false,
+        tasks: [
+          {
+            title: "Refactorizar landing Sanaré y Nomad a componentes reutilizables",
+            tag: "frontend",
+            area: "Arquitectura frontend",
+          },
+          {
+            title: "Optimizar tiempos de carga (imágenes, fuentes, Lighthouse > 85)",
+            tag: "frontend",
+            area: "Performance",
+          },
+          {
+            title: "Actualizar secciones de servicios oncológicos y pruebas genómicas",
+            tag: "frontend",
+            area: "Contenido",
+          },
+          {
+            title: "Agregar sección de historias de éxito / casos clínicos",
+            tag: "frontend",
+            area: "Marketing",
+          },
+          {
+            title: "Configurar despliegue automático desde GitHub a Vercel / GitHub Pages",
+            tag: "devops",
+            area: "CI/CD",
+          },
+          {
+            title: "Integrar formularios de contacto con n8n / Firebase para leads",
+            tag: "backend",
+            area: "Captura de leads",
+          },
+        ],
+      },
+      {
+        id: "pulsera_iot",
+        name: "Pulsera de monitoreo de pacientes",
+        type: "IoT / Dispositivos",
+        tagClass: "iot",
+        progress15: 20,
+        progressMonth: 20,
+        estimatedDays: 120,
+        showPhone: false,
+        tasks: [
+          {
+            title: "Definir variables a monitorear (FC, SpO2, temperatura, etc.)",
+            tag: "research",
+            area: "Alcance clínico",
+          },
+          {
+            title: "Elegir hardware base de la pulsera (proveedor / SDK)",
+            tag: "iot",
+            area: "Selección tecnológica",
+          },
+          {
+            title: "Diseñar API de ingesta de datos de la pulsera",
+            tag: "backend",
+            area: "Arquitectura IoT",
+          },
+          {
+            title: "Definir esquema de almacenamiento (Firestore / BigQuery) por paciente",
+            tag: "backend",
+            area: "Modelo de datos",
+          },
+          {
+            title: "Crear panel de monitoreo en tiempo real para equipo clínico",
+            tag: "frontend",
+            area: "Dashboard",
+          },
+          {
+            title: "Configurar reglas de alerta cuando parámetros salen de rango",
+            tag: "devops",
+            area: "Alertas y notificaciones",
+          },
+          {
+            title: "Prueba piloto con X pacientes y análisis de estabilidad de la señal",
+            tag: "research",
+            area: "Validación piloto",
+          },
+        ],
+      },
+      {
+        id: "infra_ti",
+        name: "Infraestructura TI / Backups / VPN",
+        type: "TI",
+        tagClass: "ti",
+        progress15: 25,
+        progressMonth: 25,
+        estimatedDays: 60,
+        showPhone: false,
+        tasks: [
+          {
+            title: "Documentar topología actual (servidores, VPN, Firewalls, n8n, Firebase)",
+            tag: "devops",
+            area: "Inventario",
+          },
+          {
+            title: "Definir estrategia 3-2-1 de backups para información crítica",
+            tag: "devops",
+            area: "Backups",
+          },
+          {
+            title: "Automatizar respaldos de bases de datos y archivos hacia Google Drive / S3",
+            tag: "devops",
+            area: "Automatización",
+          },
+          {
+            title: "Revisar políticas de acceso VPN (KAM, administración, desarrollo)",
+            tag: "devops",
+            area: "Seguridad",
+          },
+          {
+            title: "Configurar monitoreo básico de servidores (CPU, RAM, espacio, servicios)",
+            tag: "devops",
+            area: "Monitoreo",
+          },
+        ],
+      },
+    ];
+
+    const viewRangeSelect = document.getElementById("view-range");
+    const rangeLabel = document.getElementById("range-label");
+    const container = document.getElementById("projects-container");
+    const template = document.getElementById("project-card-template");
+
+    const modalBackdrop = document.getElementById("tasks-modal");
+    const modalCloseBtn = document.getElementById("tasks-modal-close");
+    const modalProjectName = document.getElementById("tasks-modal-project-name");
+    const modalSubtitle = document.getElementById("tasks-modal-subtitle");
+    const modalTasksOl = document.getElementById("tasks-list-ol");
+    const modalCount = document.getElementById("tasks-modal-count");
+
+    function getStatusFromProgress(pct) {
+      if (pct >= 75) {
+        return { text: "En verde", dotClass: "success" };
+      }
+      if (pct >= 40) {
+        return { text: "Atención", dotClass: "mid" };
+      }
+      return { text: "Riesgo", dotClass: "risk" };
+    }
+
+    function openTasksModal(project) {
+      modalProjectName.textContent = project.name;
+      modalSubtitle.textContent =
+        "Tareas técnicas para " + project.name + " (" + project.type + "). Úsalas como guía con tu equipo de desarrollo.";
+      modalTasksOl.innerHTML = "";
+
+      let doneCount = 0;
+
+      project.tasks.forEach((task, index) => {
+        const li = document.createElement("li");
+        li.className = "task-item";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = project.id + "_task_" + index;
+
+        checkbox.addEventListener("change", () => {
+          // Sólo cuenta marcadas en esta vista local
+          doneCount = modalTasksOl.querySelectorAll("input[type='checkbox']:checked").length;
+          modalCount.textContent =
+            doneCount + " de " + project.tasks.length + " tareas marcadas como completadas (sólo en esta sesión).";
+        });
+
+        const main = document.createElement("div");
+        main.className = "task-main";
+
+        const title = document.createElement("div");
+        title.className = "task-title";
+        title.textContent = task.title;
+
+        const meta = document.createElement("div");
+        meta.className = "task-meta";
+
+        if (task.tag) {
+          const tagSpan = document.createElement("span");
+          tagSpan.className = "task-tag " + task.tag;
+          tagSpan.textContent = task.tag.toUpperCase();
+          meta.appendChild(tagSpan);
+        }
+
+        if (task.area) {
+          const areaSpan = document.createElement("span");
+          areaSpan.textContent = task.area;
+          meta.appendChild(areaSpan);
+        }
+
+        main.appendChild(title);
+        main.appendChild(meta);
+
+        li.appendChild(checkbox);
+        li.appendChild(main);
+        modalTasksOl.appendChild(li);
+      });
+
+      modalCount.textContent =
+        "0 de " + project.tasks.length + " tareas marcadas como completadas (sólo en esta sesión).";
+
+      modalBackdrop.classList.add("active");
+    }
+
+    function closeTasksModal() {
+      modalBackdrop.classList.remove("active");
+    }
+
+    modalBackdrop.addEventListener("click", (e) => {
+      if (e.target === modalBackdrop) {
+        closeTasksModal();
+      }
+    });
+
+    modalCloseBtn.addEventListener("click", () => {
+      closeTasksModal();
+    });
+
+    function renderCards(range) {
+      container.innerHTML = "";
+
+      projects.forEach((p) => {
+        const clone = template.content.cloneNode(true);
+        const card = clone.querySelector(".project-card");
+
+        const nameEl = card.querySelector(".project-name");
+        const tagEl = card.querySelector(".project-tag");
+        const progressEl = card.querySelector(".progress-percent");
+        const tasksDoneEl = card.querySelector(".tasks-done");
+        const tasksTotalEl = card.querySelector(".tasks-total");
+        const progressBarFill = card.querySelector(".progress-bar-fill");
+        const runnerImg = card.querySelector(".runner-img");
+        const runnerPercentEl = card.querySelector(".runner-percent");
+        const durationDaysEl = card.querySelector(".duration-days");
+        const durationMonthsEl = card.querySelector(".duration-months");
+        const statusDot = card.querySelector(".status-dot");
+        const statusText = card.querySelector(".status-text");
+        const phonePreviewEl = card.querySelector(".phone-preview");
+        const phoneAppNameEl = card.querySelector(".phone-app-name");
+        const phoneAppSubEl = card.querySelector(".phone-app-sub");
+        const tasksButton = card.querySelector(".tasks-button");
+
+        nameEl.textContent = p.name;
+        tagEl.textContent = p.type;
+        if (p.tagClass) tagEl.classList.add(p.tagClass);
+
+        let pct;
+        if (range === "15") {
+          pct = p.progress15;
+        } else {
+          pct = p.progressMonth;
+        }
+
+        const totalTasks = p.tasks ? p.tasks.length : 0;
+        progressEl.textContent = pct + "%";
+        tasksDoneEl.textContent = Math.round((pct / 100) * totalTasks);
+        tasksTotalEl.textContent = totalTasks;
+        progressBarFill.style.width = pct + "%";
+
+        // Tiempo estimado total (en días y meses aproximados)
+        const estimatedDays = p.estimatedDays || 0;
+        const estimatedMonths = estimatedDays / 30;
+        if (durationDaysEl) {
+          durationDaysEl.textContent = estimatedDays;
+        }
+        if (durationMonthsEl) {
+          durationMonthsEl.textContent = estimatedMonths.toFixed(1);
+        }
+
+        const status = getStatusFromProgress(pct);
+        statusText.textContent = status.text;
+        statusDot.className = "status-dot " + status.dotClass;
+
+        runnerPercentEl.textContent = pct + "%";
+        const minPos = 6;
+        const maxPos = 94;
+        const pos = minPos + ((maxPos - minPos) * pct) / 100;
+        runnerImg.style.left = pos + "%";
+
+        if (p.showPhone && phonePreviewEl) {
+          phonePreviewEl.style.display = "flex";
+          if (phoneAppNameEl) phoneAppNameEl.textContent = p.name;
+          if (phoneAppSubEl) phoneAppSubEl.textContent = p.type + " / vista móvil";
+        }
+
+        if (tasksButton) {
+          tasksButton.addEventListener("click", () => {
+            openTasksModal(p);
+          });
+        }
+
+        container.appendChild(card);
+      });
+    }
+
+    viewRangeSelect.addEventListener("change", (e) => {
+      const value = e.target.value;
+      rangeLabel.textContent =
+        value === "15" ? "Últimos 15 días" : "Este mes";
+      renderCards(value);
+    });
+
+    // Render inicial
+    renderCards("15");
+  </script>
+</body>
+</html>
